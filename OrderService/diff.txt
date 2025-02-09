@@ -1,0 +1,213 @@
+diff --git a/OrderService/OrderService.csproj b/OrderService/OrderService.csproj
+index ee25c2f..9f80dd7 100644
+--- a/OrderService/OrderService.csproj
++++ b/OrderService/OrderService.csproj
+@@ -8,6 +8,15 @@
+ 
+   <ItemGroup>
+     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
++      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
++      <PrivateAssets>all</PrivateAssets>
++    </PackageReference>
++    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
++      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
++      <PrivateAssets>all</PrivateAssets>
++    </PackageReference>
+   </ItemGroup>
+ 
+ </Project>
+diff --git a/ProductService/Controllers/ProductsController.cs b/ProductService/Controllers/ProductsController.cs
+index 499e1be..2803900 100644
+--- a/ProductService/Controllers/ProductsController.cs
++++ b/ProductService/Controllers/ProductsController.cs
+@@ -1,7 +1,3 @@
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Threading.Tasks;
+ using Microsoft.AspNetCore.Mvc;
+ using Microsoft.EntityFrameworkCore;
+ using ProductService.Data;
+@@ -9,7 +5,12 @@ using ProductService.Models;
+ 
+ namespace ProductService.Controllers
+ {
++    // [ApiController] indica que este controlador está diseñado para servir respuestas de API.
++    // Proporciona características como validación automática y manejo de errores mejorado.
+     [ApiController]
++
++    // [Route("api/[controller]")] define la ruta base para este controlador.
++    // [controller] se reemplaza dinámicamente con el nombre del controlador (en este caso, "products"). Por lo tanto, la ruta base será "api/products".
+     [Route("api/[controller]")]
+     public class ProductsController : ControllerBase
+     {
+@@ -20,83 +21,106 @@ namespace ProductService.Controllers
+             _context = context;
+         }
+ 
++        // [HttpGet("GetAllProducts")] define una acción que responde a solicitudes GET a la ruta "api/products/GetAllProducts".
+         [HttpGet("GetAllProducts")]
+         public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
+         {
++            // Usa el contexto de la base de datos para obtener todos los productos de forma asíncrona.
+             return await _context.Products.ToListAsync();
+         }
+ 
++        // [HttpGet("GetProduct/{id}")] define una acción que responde a solicitudes GET a la ruta "api/products/GetProduct/{id}".
++        // {id} es un parámetro de ruta que se captura y se pasa al método GetProduct.
+         [HttpGet("GetProduct/{id}")]
+         public async Task<ActionResult<Product>> GetProduct(int id)
+         {
++            // Busca un producto por su ID de forma asíncrona.
+             var product = await _context.Products.FindAsync(id);
+ 
++            // Si no se encuentra el producto, devuelve un resultado NotFound (código de estado 404).
+             if (product == null)
+             {
+                 return NotFound();
+             }
+ 
++            // Si se encuentra el producto, lo devuelve.
+             return product;
+         }
+ 
++        // [HttpPost("PostProduct")] define una acción que responde a solicitudes POST a la ruta "api/products/PostProduct".
+         [HttpPost("PostProduct")]
+         public async Task<ActionResult<Product>> PostProduct(Product product)
+         {
++            // Agrega el nuevo producto al contexto de la base de datos.
+             _context.Products.Add(product);
++            // Guarda los cambios en la base de datos de forma asíncrona.
+             await _context.SaveChangesAsync();
+ 
++            // Devuelve un resultado CreatedAtAction (código de estado 201) con la información del producto creado.
++            // "GetProduct" es el nombre de la acción que se utilizará para generar la URL del recurso creado.
+             return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+         }
+ 
++        // [HttpPut("PutProduct/{id}")] define una acción que responde a solicitudes PUT a la ruta "api/products/PutProduct/{id}".
+         [HttpPut("PutProduct/{id}")]
+         public async Task<IActionResult> PutProduct(int id, Product product)
+         {
++            // Si el ID del producto en la URL no coincide con el ID del producto en el cuerpo de la solicitud,
++            // devuelve un resultado BadRequest (código de estado 400).
+             if (id != product.Id)
+             {
+                 return BadRequest();
+             }
+ 
++            // Marca la entidad product como modificada en el contexto de la base de datos.
+             _context.Entry(product).State = EntityState.Modified;
+ 
+             try
+             {
++                // Guarda los cambios en la base de datos de forma asíncrona.
+                 await _context.SaveChangesAsync();
+             }
+-            catch (DbUpdateConcurrencyException)
++            catch (DbUpdateConcurrencyException) // Maneja excepciones de concurrencia.
+             {
+-                if (!ProductExists(id))
++                if (!ProductExists(id)) // Si el producto no existe, devuelve NotFound.
+                 {
+                     return NotFound();
+                 }
+                 else
+                 {
+-                    throw;
++                    throw; // Re-lanza la excepción si no es por un producto inexistente.
+                 }
+             }
+ 
+-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
++            // Devuelve un resultado CreatedAtAction (código de estado 201) con la información del producto actualizado.
++            // "GetProduct" es el nombre de la acción que se utilizará para generar la URL del recurso actualizado.
+ 
++            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+         }
+ 
++        // [HttpDelete("DeleteProduct/{id}")] define una acción que responde a solicitudes DELETE a la ruta "api/products/DeleteProduct/{id}".
+         [HttpDelete("DeleteProduct/{id}")]
+         public async Task<IActionResult> DeleteProduct(int id)
+         {
++            // Busca un producto por su ID de forma asíncrona.
+             var product = await _context.Products.FindAsync(id);
+             if (product == null)
+             {
+-                return NotFound();
++                return NotFound(); // Si no se encuentra el producto, devuelve NotFound.
+             }
+ 
++            // Elimina el producto del contexto de la base de datos.
+             _context.Products.Remove(product);
++            // Guarda los cambios en la base de datos de forma asíncrona.
+             await _context.SaveChangesAsync();
+ 
+-            return Ok("Product deleted successfully");
++            return Ok("Product deleted successfully"); // Devuelve un resultado Ok (código de estado 200) con un mensaje de éxito.
+         }
+ 
++        // Método privado para verificar si un producto existe en la base de datos.
+         private bool ProductExists(int id)
+         {
+             return _context.Products.Any(e => e.Id == id);
+         }
+-        
+     }
+ }
+\ No newline at end of file
+diff --git a/ProductService/Data/ProductContext.cs b/ProductService/Data/ProductContext.cs
+index 2ccc4f2..1fa74d1 100644
+--- a/ProductService/Data/ProductContext.cs
++++ b/ProductService/Data/ProductContext.cs
+@@ -1,26 +1,38 @@
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Threading.Tasks;
+ using Microsoft.EntityFrameworkCore;
+ using ProductService.Models;
+ 
+ namespace ProductService.Data
+ {
+-    public class ProductContext: DbContext
++    // Define la clase ProductContext que hereda de DbContext.
++    // ProductContext representa el contexto de la base de datos para la aplicación.
++    public class ProductContext : DbContext
+     {
+-        public ProductContext(DbContextOptions<ProductContext> options): base(options)
++        // Constructor de ProductContext que recibe DbContextOptions<ProductContext>.
++        // Estas opciones se utilizan para configurar el contexto de la base de datos, como la cadena de conexión y el proveedor de base de datos.
++        public ProductContext(DbContextOptions<ProductContext> options) : base(options)
+         {
+-            
+         }
+ 
++        // Define un DbSet<Product> llamado Products.
++        // DbSet representa una tabla en la base de datos y se utiliza para realizar 
++        // consultas y operaciones CRUD (Crear, Leer, Actualizar, Eliminar) en la tabla Product.
+         public DbSet<Product> Products { get; set; }
+ 
++        // Sobrescribe el método OnModelCreating para configurar el modelo de la base de datos.
++        // Este método se llama durante la creación del modelo y permite definir 
++        // configuraciones específicas para las entidades y las relaciones.
+         protected override void OnModelCreating(ModelBuilder modelBuilder)
+         {
++            // Configura la propiedad Price de la entidad Product.
++            // HasColumnType("decimal(18,2)") especifica que la columna correspondiente  en la base de datos debe ser de tipo decimal con una precisión de 18 dígitos 
++            // y 2 decimales. Esto es importante para garantizar la precisión de los valores monetarios.
+             modelBuilder.Entity<Product>().
+-            Property(p=> p.Price).
+-            HasColumnType("decimal(18,2)");
++                Property(p => p.Price).
++                HasColumnType("decimal(18,2)");
++
++            // Llama al método base.OnModelCreating para asegurarse de que se ejecuten las configuraciones predeterminadas.
++            base.OnModelCreating(modelBuilder);
++            
+         }
+     }
+ }
+\ No newline at end of file
