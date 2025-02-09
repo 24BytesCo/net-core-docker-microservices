@@ -36,6 +36,34 @@ builder.Services.AddControllers(); // Agrega controladores a la aplicación.
 
 var app = builder.Build(); // Construye la aplicación web.
 
+// Este bloque de código se ejecuta durante el inicio de la aplicación
+// y se encarga de aplicar las migraciones de Entity Framework Core a la base de datos.
+
+// Crea un nuevo ámbito de servicios. 
+// Los ámbitos controlan el ciclo de vida de los objetos y las dependencias.
+// El ámbito se libera automáticamente al finalizar el bloque 'using', lo que es importante para 
+// evitar fugas de memoria y otros problemas.
+using (var scope = app.Services.CreateScope()) 
+{
+    // Obtiene el IServiceProvider del ámbito actual.
+    // El IServiceProvider permite acceder a los servicios registrados.
+    var services = scope.ServiceProvider; 
+
+    // ProductContext representa la conexión a la base de datos y contiene las configuraciones de Entity Framework Core.
+    // GetRequiredService lanza una excepción si el servicio no está registrado.
+    // Obtiene una instancia del contexto de la base de datos ProductContext.
+    var context = services.GetRequiredService<ProductContext>(); 
+
+
+    // Las migraciones son archivos de código que describen cómo modificar la  estructura de la base de datos (crear tablas, agregar columnas, etc.).
+    // Migrate() aplica las migraciones que aún no se han aplicado, asegurando que la base de datos tenga el esquema correcto según el modelo.
+    // Aplica las migraciones pendientes a la base de datos.
+    context.Database.Migrate(); 
+                               
+} 
+
+
+
 app.UseRequestLocalization(); // Habilita la localización de solicitudes.
 
 app.UseAuthorization(); // Habilita la autorización en la aplicación.
