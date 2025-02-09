@@ -20,13 +20,13 @@ namespace ProductService.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        [HttpGet("GetAllProducts")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
         {
             return await _context.Products.ToListAsync();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetProduct/{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -39,7 +39,7 @@ namespace ProductService.Controllers
             return product;
         }
 
-        [HttpPost]
+        [HttpPost("PostProduct")]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
             _context.Products.Add(product);
@@ -48,7 +48,7 @@ namespace ProductService.Controllers
             return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("PutProduct/{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
             if (id != product.Id)
@@ -74,10 +74,11 @@ namespace ProductService.Controllers
                 }
             }
 
-            return NoContent();
+            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteProduct/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -89,7 +90,7 @@ namespace ProductService.Controllers
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Product deleted successfully");
         }
 
         private bool ProductExists(int id)

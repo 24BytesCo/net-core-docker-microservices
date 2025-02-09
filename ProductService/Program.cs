@@ -36,6 +36,10 @@ builder.Services.AddControllers(); // Agrega controladores a la aplicación.
 
 var app = builder.Build(); // Construye la aplicación web.
 
+
+app.UseRequestLocalization(); // Habilita la localización de solicitudes.
+
+
 // Este bloque de código se ejecuta durante el inicio de la aplicación
 // y se encarga de aplicar las migraciones de Entity Framework Core a la base de datos.
 
@@ -64,9 +68,6 @@ using (var scope = app.Services.CreateScope())
 
 
 
-app.UseRequestLocalization(); // Habilita la localización de solicitudes.
-
-app.UseAuthorization(); // Habilita la autorización en la aplicación.
 
 // Configura el pipeline de solicitudes HTTP.
 if (app.Environment.IsDevelopment())
@@ -77,5 +78,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection(); // Redirecciona las solicitudes HTTP a HTTPS.
-
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
