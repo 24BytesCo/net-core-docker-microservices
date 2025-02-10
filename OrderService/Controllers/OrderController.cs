@@ -44,6 +44,7 @@ namespace OrderService.Controllers
         [HttpPost("PostOrder")]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
+            order.OrderDate = DateTime.Now; // Establece la fecha de la orden como la fecha actual
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
